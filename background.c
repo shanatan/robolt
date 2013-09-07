@@ -16,9 +16,14 @@ TASK(BackGround)
     for(;;) {
         /* ’´‰¹”gƒZƒ“ƒT */
         sonar = ecrobot_get_sonar_sensor(PORT_SONAR);
-        if (sonar < 10) {
+        //display_clear(0);
+        //display_goto_xy(0, 0);
+        //display_int(sonar, 5);
+        //display_update();
+
+        if (sonar < 20) {
             sonar_cnt++;
-            if (sonar_cnt > 10) {
+            if (sonar_cnt > 3) {
                 gkTaskMes.message = MES_LOOKUP;
             } else { /* nothing */ }
         } else { /* nothing */ }
