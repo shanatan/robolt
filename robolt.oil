@@ -1,0 +1,63 @@
+#include "implementation.oil"
+
+CPU ATMEL_AT91SAM7S256
+{
+    OS LEJOS_OSEK
+    {
+        STATUS = EXTENDED;
+        STARTUPHOOK = FALSE;
+        ERRORHOOK = FALSE;
+        SHUTDOWNHOOK = FALSE;
+        PRETASKHOOK = FALSE;
+        POSTTASKHOOK = FALSE;
+        USEGETSERVICEID = FALSE;
+        USEPARAMETERACCESS = FALSE;
+        USERESSCHEDULER = FALSE;
+    };
+
+    /* Definition of application mode */
+    APPMODE appmode1{}; 
+
+    TASK LineTrace
+    {
+        AUTOSTART   = FALSE;
+        PRIORITY    = 16; 
+        ACTIVATION  = 1;
+        SCHEDULE    = FULL;
+        STACKSIZE   = 512;
+    };
+
+    TASK BackGround
+    {
+        AUTOSTART   = TRUE
+        {
+            APPMODE = appmode1;
+        };
+        PRIORITY    = 1; 
+        ACTIVATION  = 1;
+        SCHEDULE    = FULL;
+        STACKSIZE   = 512;
+    };
+
+    COUNTER SysTimerCnt
+    {
+        MINCYCLE        = 1;
+        MAXALLOWEDVALUE = 10000;
+        TICKSPERBASE    = 1; /* One tick is equal to 1msec */
+    };
+
+    ALARM cyclic_alarm1
+    {
+        COUNTER = SysTimerCnt;
+        ACTION = ACTIVATETASK
+        {
+            TASK = LineTrace;
+        };
+        AUTOSTART = TRUE
+        {
+            ALARMTIME   = 1;
+            CYCLETIME   = 4;
+            APPMODE     = appmode1;
+        };
+    };
+};
