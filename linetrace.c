@@ -5,14 +5,10 @@
 #include "sensor_IF.h"
 
 #include "main.h"
+#include "linetrace.h"
 #include "linetrace_IF.h"
 
-#define BLACK_WHITE_THRESHOLD   (U16)530
-
 extern  ROBOT_STAT  gkRobotStat;
-
-S32 diff[2];
-F32 integral;
 
 /* プロトタイプ宣言 */
 static  void    lt_calc_pid(U16 light, F32 *pturn);
@@ -115,30 +111,30 @@ void    lt_linetrace(
 {
     S8  pwm_l;
     S8  pwm_r;
-    F32 forward = 80.0;
+    F32 forward;
     F32 turn;
+    F32 u_turn;
     U16 lightness;
 
     lightness = ecrobot_get_light_sensor(PORT_LIGHT);
     lt_calc_pid(lightness, &turn);
+
     if (turn > 100) {
-        turn = 100.0;
+        turn = 100;
     } else if (turn < -100) {
-        turn = -100.0;
+        turn = -100;
     }
-    
-    //if (turn > 50.0) {
-    //    forward = 40.0;
-    //} else if (turn < -50.0) {
-    //    forward = 40.0;
-    //}
-    
-    //if (lightness < BLACK_WHITE_THRESHOLD) {
-    //    turn = (F32)80; // 白いときは、右へ
-    //} else {
-    //    turn = (F32)-80; // 黒いときは、左へ
-    //}
-    
+
+    /* 絶対値をとる */
+    if (turn > 0) {
+        u_turn = turn;
+    } else {
+        u_turn = (-1) * turn;
+    }
+
+    /* 旋回量から前進量を調整する */
+    forward = 160 - (u_turn / 1.0);
+
     balance_control(
         (F32)forward,
         turn,
@@ -149,10 +145,18 @@ void    lt_linetrace(
         (F32)ecrobot_get_battery_voltage(),
         &pwm_l,
         &pwm_r);
-    
+
     nxt_motor_set_speed(PORT_MOTOR_L, pwm_l, 1);
     nxt_motor_set_speed(PORT_MOTOR_R, pwm_r, 1);
 
+    display_clear(0);
+    display_goto_xy(0, 0);
+    display_int(turn, 5);
+    display_goto_xy(0, 1);
+    display_int(forward, 5);
+    display_update();
+
+    return;
 }
 
 /*!*********************************************************
@@ -170,14 +174,27 @@ static  void    lt_calc_pid(
                     F32 *pturn
                 )
 {
-    F32 p, i, d;
+    static S32  diff[2];
+    static F32  integral;
+    static U32  cnt;
+
+    F32 p;
+    F32 i;
+    F32 d;
+
+    /* 1秒ごとに積算をクリアする */
+    cnt++;
+    if (cnt > (INTEGRAL_CLEAR_TIME / (U32)4)) {
+        integral = (F32)0;
+    } else { /* nothing */ }
+
     diff[0] = diff[1];
     diff[1] = light - BLACK_WHITE_THRESHOLD;
     integral += (diff[1] + diff[0]) / 2.0 * 0.004;
 
-    p = 0.5 * diff[1];
-    i = 0.32 * integral;
-    d = 0.1 * (diff[1] - diff[0]) / 0.004;
+    p = 1.75 * diff[1];
+    i = 0.35 * integral;
+    d = 0.45 * (diff[1] - diff[0]) / 0.004;
 
     //*pturn = ((light - BLACK_WHITE_THRESHOLD) * -1.2);
 
