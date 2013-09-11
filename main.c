@@ -27,8 +27,12 @@ TASK(LineTrace)
 {
     /* èÛë‘ëJà⁄ */
     switch (gkRobotStat.robotStat) {
-        case ROBOT_STAT_READY:  /* í‚é~èÛë‘                 */ break;
-        case ROBOT_STAT_STAND:  /* ì|óßèÛë‘                 */ break;
+        case ROBOT_STAT_READY:  /* í‚é~èÛë‘                 */
+        case ROBOT_STAT_STAND:  /* ì|óßèÛë‘                 */
+            if (gkTaskMes.message == MES_LOOKUP) {
+                gkTaskMes.message = MES_INI;
+            } else { /* nothing */ }
+            break;
         case ROBOT_STAT_TRACE:  /* ÉgÉåÅ[ÉXèÛë‘             */
             if (gkTaskMes.message == MES_LOOKUP) {
                 gkRobotStat.robotStat = ROBOT_STAT_LOOKUP;

@@ -12,7 +12,7 @@
 #define LOOKUP_STAT_RUN         (U32)7
 
 #define LOOKUP_COCK_START_ANGLE (U32)110
-#define LOOKUP_COCK_ANGLE       (U32)70
+#define LOOKUP_COCK_ANGLE       (U32)60
 
 typedef struct _LOOKUP_STAT{
     U32 lookupStat;

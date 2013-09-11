@@ -97,11 +97,28 @@ void    lookup_start(
             void
         )
 {
-    lookup_stand((F32)0, (F32)0, GYRO_OFFSET);
+    U16 lightness;
+    F32 turn;
+    F32 forward = 0;
+    int sonar;
+
+    lightness = ecrobot_get_light_sensor(PORT_LIGHT);
+    if (lightness > (U16)530) {
+        turn = -50;
+    } else {
+        turn = 50;
+    }
+
+    sonar = ecrobot_get_sonar_sensor(PORT_SONAR);
+    if (sonar < 25) {
+        forward = -10;
+    } else { /* nothing */ }
+
+    lookup_stand(forward, turn, GYRO_OFFSET);
 
     nxt_motor_set_count(PORT_MOTOR_TAIL, 0);
     nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)0, 1);
-    gkLookupStat.lookupStat = LOOKUP_STAT_TAIL_DOWN;
+//    gkLookupStat.lookupStat = LOOKUP_STAT_TAIL_DOWN;
 
     return;
 }

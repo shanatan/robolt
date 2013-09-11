@@ -133,7 +133,14 @@ void    lt_linetrace(
     }
 
     /* 旋回量から前進量を調整する */
-    forward = 160 - (u_turn / 1.0);
+    //forward = 160 - (u_turn / 1.0);
+    if (u_turn < 30) {
+        forward = 130;
+    } else if (u_turn < 50) {
+        forward = 110;
+    } else {
+        forward = 85;
+    }
 
     balance_control(
         (F32)forward,
@@ -182,19 +189,20 @@ static  void    lt_calc_pid(
     F32 i;
     F32 d;
 
-    /* 1秒ごとに積算をクリアする */
+    /* 積算をクリアする */
     cnt++;
     if (cnt > (INTEGRAL_CLEAR_TIME / (U32)4)) {
         integral = (F32)0;
+        cnt = 0;
     } else { /* nothing */ }
 
     diff[0] = diff[1];
     diff[1] = light - BLACK_WHITE_THRESHOLD;
     integral += (diff[1] + diff[0]) / 2.0 * 0.004;
 
-    p = 1.75 * diff[1];
-    i = 0.35 * integral;
-    d = 0.45 * (diff[1] - diff[0]) / 0.004;
+    p = 1.50 * diff[1];
+    i = 0.50 * integral;
+    d = 0.40 * (diff[1] - diff[0]) / 0.004;
 
     //*pturn = ((light - BLACK_WHITE_THRESHOLD) * -1.2);
 
