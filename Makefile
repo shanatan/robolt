@@ -7,6 +7,7 @@ TARGET_SOURCES = \
     main.c \
     main_table.c \
     background.c \
+    sensor_table.c \
     tasksync_table.c \
     linetrace.c \
     lookup.c \

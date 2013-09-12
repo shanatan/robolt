@@ -3,4 +3,8 @@
 
 #define GYRO_OFFSET (F32)607
 
+typedef struct _SENSOR_VAL {
+    int sonar;
+} SENSOR_VAL;
+
 #endif  /* __SENSOR_IF_H__ */

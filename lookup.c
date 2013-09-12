@@ -10,12 +10,12 @@
 #include "lookup_IF.h"
 
 extern  LOOKUP_STAT gkLookupStat;
+extern  SENSOR_VAL  gkSensorVal;
 
 /* ÉvÉçÉgÉ^ÉCÉvêÈåæ */
 void    lookup_start(void);
 void    lookup_tail_down(void);
 void    lookup_cock(void);
-void    lookup_tail_up(void);
 void    lookup_forward(void);
 void    lookup_standing(void);
 
@@ -64,9 +64,6 @@ void    lookup_entry(
         case LOOKUP_STAT_COCK:
             lookup_cock();
             break;
-        case LOOKUP_STAT_TAIL_UP:
-            lookup_tail_up();
-            break;
         case LOOKUP_STAT_FORWARD:
             lookup_forward();
             break;
@@ -99,26 +96,23 @@ void    lookup_start(
 {
     U16 lightness;
     F32 turn;
-    F32 forward = 0;
-    int sonar;
+    F32 forward;
+    static int old_sonar = 35;
+
+    old_sonar = (gkSensorVal.sonar + old_sonar) / 2;
+    //forward = 4 * (old_sonar - 15);
+    forward = (1.0) * (old_sonar - 20);
 
     lightness = ecrobot_get_light_sensor(PORT_LIGHT);
-    if (lightness > (U16)530) {
-        turn = -50;
-    } else {
-        turn = 50;
-    }
-
-    sonar = ecrobot_get_sonar_sensor(PORT_SONAR);
-    if (sonar < 25) {
-        forward = -10;
-    } else { /* nothing */ }
+    turn = (1.5) * (530 - lightness);
 
     lookup_stand(forward, turn, GYRO_OFFSET);
 
-    nxt_motor_set_count(PORT_MOTOR_TAIL, 0);
-    nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)0, 1);
-//    gkLookupStat.lookupStat = LOOKUP_STAT_TAIL_DOWN;
+    if (forward <= 0) {
+        nxt_motor_set_count(PORT_MOTOR_TAIL, 0);
+        nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)10, 1);
+        gkLookupStat.lookupStat = LOOKUP_STAT_TAIL_DOWN;
+    } else { /* nothing */ }
 
     return;
 }
@@ -137,18 +131,25 @@ void    lookup_tail_down(
             void
         )
 {
+    U16 lightness;
+    F32 turn;
+    F32 forward;
     int tail;
 
-    lookup_stand((F32)0, (F32)0, GYRO_OFFSET);
+    lightness = ecrobot_get_light_sensor(PORT_LIGHT);
+    turn = (0.5) * (530 - lightness);
+
+    forward = (0.7) * (gkSensorVal.sonar - 15);
+
+    lookup_stand((F32)forward, (F32)turn, GYRO_OFFSET);
 
     /* êKîˆêßå‰ */
     tail = nxt_motor_get_count(PORT_MOTOR_TAIL);
-    if (tail < LOOKUP_COCK_START_ANGLE) {
-        nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)10, 1);
-    } else {
+    if (tail > LOOKUP_COCK_START_ANGLE) {
         nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)0, 1);
+        lookup_stand((F32)0, (F32)0, GYRO_OFFSET - 20);
         gkLookupStat.lookupStat = LOOKUP_STAT_COCK;
-    }
+    } else { /* nothing */ }
 
     return;
 }
@@ -168,67 +169,18 @@ void    lookup_cock(
         )
 {
     int tail;
-    static int cnt = 0;
-
-    lookup_stand((F32)0, (F32)0, GYRO_OFFSET - 10);
 
     /* êKîˆêßå‰ */
     tail = nxt_motor_get_count(PORT_MOTOR_TAIL);
-    if (tail < LOOKUP_COCK_START_ANGLE) {
-        nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)10, 1);
-    } else {
-        nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)-10, 1);
-    }
 
-    if (cnt >= 125) {
+    if (tail > LOOKUP_COCK_ANGLE) {
+        nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)-5, 1);
+    } else {
+        nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)30, 1);
         nxt_motor_set_speed(PORT_MOTOR_L, 0, 1);
         nxt_motor_set_speed(PORT_MOTOR_R, 0, 1);
-        gkLookupStat.lookupStat = LOOKUP_STAT_TAIL_UP;
-    } else {
-        cnt++;
-    }
-
-    return;
-}
-
-/*!*********************************************************
- *  @brief
- *
- *  @param
- *
- *  @retval
- *
- *  @return
- *
-**********************************************************/
-void    lookup_tail_up(
-            void
-        )
-{
-    int tail;
-    static int target   = LOOKUP_COCK_START_ANGLE;
-    static int cnt      = 0;
-
-    if (cnt == 50) {
-        target -= 5;
-        cnt = 0;
-    } else {
-        cnt++;
-    }
-
-    /* êKîˆêßå‰ */
-    tail = nxt_motor_get_count(PORT_MOTOR_TAIL);
-    if (tail < target) {
-        nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)30, 1);
-    } else {
-        nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)-30, 1);
-    }
-
-    if (target <= LOOKUP_COCK_ANGLE) {
-        nxt_motor_set_count(PORT_MOTOR_L, 0);
-        nxt_motor_set_count(PORT_MOTOR_R, 0);
         gkLookupStat.lookupStat = LOOKUP_STAT_FORWARD;
-    } else { /* nothing */ }
+    }
 
     return;
 }
@@ -247,29 +199,22 @@ void    lookup_forward(
             void
         )
 {
-    int tail;
-    int right;
+    U16 lightness;
+    lightness = ecrobot_get_light_sensor(PORT_LIGHT);
 
-    /* êKîˆêßå‰ */
-    tail = nxt_motor_get_count(PORT_MOTOR_TAIL);
-    if (tail < LOOKUP_COCK_ANGLE) {
-        nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)80, 1);
+    if (lightness > 600) {
+        nxt_motor_set_speed(PORT_MOTOR_R, 60, 1);
+        nxt_motor_set_speed(PORT_MOTOR_L, 20, 1);
     } else {
-        nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)-80, 1);
+        nxt_motor_set_speed(PORT_MOTOR_R, 20, 1);
+        nxt_motor_set_speed(PORT_MOTOR_L, 60, 1);
     }
 
-    nxt_motor_set_speed(PORT_MOTOR_L, 30, 1);
-    nxt_motor_set_speed(PORT_MOTOR_R, 30, 1);
-
-    right = nxt_motor_get_count(PORT_MOTOR_R);
-    if (right > 720) {
-        nxt_motor_set_speed(PORT_MOTOR_L, 0, 1);
-        nxt_motor_set_speed(PORT_MOTOR_R, 0, 1);
-        nxt_motor_set_count(PORT_MOTOR_TAIL, 0);
-        gkLookupStat.lookupStat = LOOKUP_STAT_STAND;
-    } else { /* nothing */ }
-
-    return;
+    display_clear(0);
+    display_goto_xy(0, 0);
+    display_int(lightness, 5);
+    display_update();
+//        ecrobot_sound_tone(1000, 100, 25);
 }
 
 /*!*********************************************************
