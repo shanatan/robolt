@@ -12,6 +12,10 @@ TARGET_SOURCES = \
     linetrace.c \
     lookup.c \
     lookup_table.c \
+    seesaw.c \
+    seesaw_table.c \
+    garage.c \
+    garage_table.c \
 
 TOPPERS_OSEK_OIL_SOURCE = ./robolt.oil
 

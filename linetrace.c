@@ -27,11 +27,28 @@ void    lt_pol_triger(
             void
         )
 {
-    U8 currentStatus = ecrobot_get_touch_sensor(PORT_TOUCH);
+    U8  touch;
+    U32 bt = 0;
+    char buf[128];
+    U32 size;
     S8  pwm_l;
     S8  pwm_r;
 
-    if (currentStatus == 1) {
+    /* タッチセンサ */
+    touch = ecrobot_get_touch_sensor(PORT_TOUCH);
+
+    /* Bluetooth */
+    size = ecrobot_read_bt(buf, 0, 128);
+    if (size > 0) {
+        if (buf[0] == 's') {
+            ecrobot_send_bt("start", 0,  5);
+            bt = 1;
+        } else {
+            ecrobot_send_bt("unknown", 0, 7);
+        }
+    } else { /* nothing */ }
+
+    if (touch == 1 || bt == 1) {
         /* 倒立制御 */
         balance_control(
             (F32)0,
@@ -89,7 +106,7 @@ void    lt_statnd(
     tail = nxt_motor_get_count(PORT_MOTOR_TAIL);
     if (tail < -40) {
         gkRobotStat.robotStat = ROBOT_STAT_TRACE;
-        //gkRobotStat.robotStat = ROBOT_STAT_LOOKUP;
+        //gkRobotStat.robotStat = ROBOT_STAT_GARAGE;
     } else {
         nxt_motor_set_speed(PORT_MOTOR_TAIL, (S8)-50, 1);
     }
@@ -133,14 +150,21 @@ void    lt_linetrace(
     }
 
     /* 旋回量から前進量を調整する */
-    //forward = 160 - (u_turn / 1.0);
     if (u_turn < 30) {
-        forward = 130;
+        forward = 85;
     } else if (u_turn < 50) {
-        forward = 110;
+        forward = 85;
     } else {
         forward = 85;
     }
+
+    //if (u_turn < 30) {
+    //    forward = 100;
+    //} else if (u_turn < 50) {
+    //    forward = 90;
+    //} else {
+    //    forward = 85;
+    //}
 
     balance_control(
         (F32)forward,
@@ -155,13 +179,6 @@ void    lt_linetrace(
 
     nxt_motor_set_speed(PORT_MOTOR_L, pwm_l, 1);
     nxt_motor_set_speed(PORT_MOTOR_R, pwm_r, 1);
-
-    display_clear(0);
-    display_goto_xy(0, 0);
-    display_int(turn, 5);
-    display_goto_xy(0, 1);
-    display_int(forward, 5);
-    display_update();
 
     return;
 }
@@ -182,8 +199,8 @@ static  void    lt_calc_pid(
                 )
 {
     static S32  diff[2];
-    static F32  integral;
-    static U32  cnt;
+    static F32  integral = 0;
+    static U32  cnt = 0;
 
     F32 p;
     F32 i;

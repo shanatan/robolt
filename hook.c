@@ -6,6 +6,8 @@
 #include "port_IF.h"
 #include "main_IF.h"
 #include "lookup_IF.h"
+#include "seesaw_IF.h"
+#include "garage_IF.h"
 
 DeclareCounter(SysTimerCnt);
 
@@ -29,12 +31,15 @@ void ecrobot_device_initialize(void)
 
     lt_ini();
     lookup_ini();
+    seesaw_ini();
+    garage_ini();
 }
 
 void ecrobot_device_terminate(void)
 {
     nxt_motor_set_speed(PORT_MOTOR_L, 0, 1);
     nxt_motor_set_speed(PORT_MOTOR_R, 0, 1);
+    nxt_motor_set_speed(PORT_MOTOR_TAIL, 0, 1);
     ecrobot_term_sonar_sensor(PORT_SONAR);
 }
 

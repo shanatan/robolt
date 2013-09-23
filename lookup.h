@@ -13,6 +13,10 @@
 #define LOOKUP_STAT_BACK        (U32)8  /* ì|óßèÛë‘         */
 #define LOOKUP_STAT_TURN_R      (U32)9
 #define LOOKUP_STAT_FORWARD_2ND (U32)10
+#define LOOKUP_STAT_UP          (U32)11
+
+#define LOOKUP_RET_FORE         (U32)0  /* ì|óßêUéqAPIñﬂÇË(ëOêi)    */
+#define LOOKUP_RET_REAR         (U32)1  /* ì|óßêUéqAPIñﬂÇË(å„ëﬁ)    */
 
 #define LOOKUP_COCK_START_ANGLE (U32)110
 #define LOOKUP_COCK_ANGLE       (U32)67

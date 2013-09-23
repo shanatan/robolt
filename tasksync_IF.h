@@ -5,6 +5,7 @@
 
 #define MES_INI     (U32)1  /* 初期状態                 */
 #define MES_LOOKUP  (U32)2  /* ルックアップゲート発見   */
+#define MES_SHOCK   (U32)3  /* 衝撃検知                 */
 
 typedef struct _TASK_MES{
     U32 message;
